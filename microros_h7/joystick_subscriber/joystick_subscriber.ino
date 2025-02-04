@@ -6,14 +6,6 @@
  * Version 1.0      Date: Janurary 21,2025 Initial Creation         Made by: Aaron Gumba
  * 
  */
-
-
-
-
-
-
-
-
 #include <micro_ros_arduino.h>
 #include <stdio.h>
 #include <rcl/rcl.h>
@@ -21,27 +13,9 @@
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
 #include <geometry_msgs/msg/twist.h>
-#include "mbed.h" 
+#include "wheel_controller.h"
 
 #define LED_PIN 13
-
-#define PWM_pinA PH_6   //PWM_9
-//#define PWM_pinB PJ_10  //PWM_8
-
-mbed::PwmOut PWM_A(PWM_pinA);  // Create a PWM object
-//mbed::PwmOut PWM_B(PWM_pinB);
-//
-#define MOTOR_pin_A1 PC_13  // GPIO 0
-#define MOTOR_pin_A2 PC_15  // GPIO 1
-//#define MOTOR_pin_B1 PD_4   // GPIO 2
-//#define MOTOR_pin_B2 PD_5   // GPIO 3
-//
-mbed::DigitalOut MOTOR_A1(MOTOR_pin_A1); 
-mbed::DigitalOut MOTOR_A2(MOTOR_pin_A2); 
-//mbed::DigitalOut MOTOR_B1(MOTOR_pin_B1); 
-//mbed::DigitalOut MOTOR_B2(MOTOR_pin_B2); 
-
-float max_pwm = 1.0;
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if ((temp_rc != RCL_RET_OK)) { error_loop(); } }
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if ((temp_rc != RCL_RET_OK)) {} }
 
@@ -60,71 +34,70 @@ void error_loop() {
 }
 
 void motor_subscription_callback(const void *msgin) {
-  PWM_A.period(0.01f);
+  
+  PWM_A.period(0.01f); //100HZ
+  PWM_B.period(0.01f);
+
+  
   const geometry_msgs__msg__Twist * msg = (const geometry_msgs__msg__Twist *)msgin;
 
-  //(-0.09 <=x<= 0.09)   threshold for noise stop motor off
-  if (msg->linear.x <= -0.09){ //threshold for noise stop motor off
+  //(-0.051 <=x<= 0.051)   threshold for noise stop motor off
+  if (msg->linear.x <= -0.051){ 
+    forward_wheels(); 
+  }
 
-   MOTOR_A1 = 1;
-   MOTOR_A2 = 0;
-    }
+  else if (msg->linear.x > 0.051){
+    backward_wheels();
+  }
 
-   else if (msg->linear.x > 0.09){
+  else if (msg->angular.z >0.98){
+    full_right_turn();
+  }
 
-    MOTOR_A1 = 0;
-    MOTOR_A2 = 1;
+  else if (msg->angular.z <-0.98){
+    full_left_turn();
+  }
     
-    }
+  else{
+    stop_wheels();
+  }
 
-   else{
-
-    MOTOR_A1 = 0;
-    MOTOR_A2 = 0;
-     
-    }
-  float pwm_val;
   //-0.2 <= x <= 0.2 threshold to run pwm max due to noise or human use of analogstick inprecise straight
-   if ((msg->angular.z <= 0.2) && (msg->angular.z >= -0.2)){
-    
-    pwm_val = max_pwm;
-    
-    }
+  if ((msg->angular.z <= 0.2) && (msg->angular.z >= -0.2)){
+    max_pwm_wheels();
+  }
     
    
-   else if (msg->angular.z > 0){
-      pwm_val = max_pwm - msg->angular.z ;
-    }
+  else if (msg->angular.z > 0){
+    right_angle(msg);
+  }
 
-    else {
-      pwm_val = fabs(msg->angular.z) ;
-      }
-    pwm_val = constrain(pwm_val, 0.0, max_pwm); // Clamp PWM to valid range
-    PWM_A.write(pwm_val);
+  else {
+    left_angle(msg);
+  }
+  pwm_valA = constrain(pwm_valA, 0.0, max_pwm); // Clamp PWM to valid range
+  pwm_valB = constrain(pwm_valB, 0.0, max_pwm); // Clamp PWM to valid range
 
-    
+  PWM_A.write(pwm_valA);
+  PWM_B.write(pwm_valB);
+
+  Serial.print("PWM A: ");
+  Serial.print(pwm_valA);
+  Serial.print(", PWM B: ");
+  Serial.println(pwm_valB);
+
 }
 
 void setup() {
-
+  Serial.begin(115200);
+  while (!Serial); // Wait for serial to initialize
 
  pinMode(LED_PIN, OUTPUT);
   // Initialize the pin to LOW (Motors off)
   MOTOR_A1 = 0;
   MOTOR_A2 = 0;
-//  MOTOR_B1 = 0;
-//  MOTOR_B2 = 0; 
-//
-//  PWM_B.period(0.02f);  // 20 kHz period (50 microseconds)
-//  PWM_B.write(0.0f);    // Start off (0% duty cycle)
-//
- 
-
-
-
-
-
-
+  MOTOR_B1 = 0;
+  MOTOR_B2 = 0;
 
   set_microros_wifi_transports(
     (char*)"COGECO-4BFA0",
@@ -164,6 +137,9 @@ void setup() {
     &motor_subscription_callback,
     ON_NEW_DATA
   ));
+
+   Serial.print("dONE ");
+  
 }
 
 void loop() {
