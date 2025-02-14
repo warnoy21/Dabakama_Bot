@@ -1,6 +1,7 @@
 ######################################################################################
 """
-Description : ROS2 publisher Joystick using the SteamDeck to control Dabakama Robot
+Description : ROS2 publisher Joystick using the SteamDeck to control Dabakama Robot.            
+             Take the input of the controller steamdeck and publish it in "JoyStick_topic"
 
 Version: 1.0        Initial Creation : January 20, 2025     Created by: Aaron Gumba
 
@@ -17,7 +18,7 @@ import pygame
 
 class JoystickPublisher(Node):
     def __init__(self):
-        super().__init__('joystick_publisher')
+        super().__init__('joystick_publisher_node')
 
         # Initialize the pygame joystick module
         pygame.init()
@@ -35,7 +36,7 @@ class JoystickPublisher(Node):
         self.get_logger().info(f"Joystick connected: {self.joystick.get_name()}")
 
         # Create a publisher for the Joy message
-        self.publisher = self.create_publisher(Joy, 'joy', 10)
+        self.publisher = self.create_publisher(Joy, 'JoyStick_topic', 10)
 
         # Timer for publishing at 50 Hz
         self.timer = self.create_timer(0.2, self.publish_joystick_data)
