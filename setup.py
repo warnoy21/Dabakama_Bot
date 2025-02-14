@@ -20,9 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "joy_stick_analog=dabakama_bot.joy_stick_analog:main",
-            "joystick_converter=dabakama_bot.joystick_converter:main",
-            "wheelspeed=dabakama_bot.wheel_speed:main"
+            "joy_stick_analog = dabakama_bot.joy_stick_analog:main"
             
         ],
     },
