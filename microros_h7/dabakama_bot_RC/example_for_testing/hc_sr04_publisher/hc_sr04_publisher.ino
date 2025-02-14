@@ -1,6 +1,6 @@
 /*
  * Description: Microros for Portenta H7 to get data from the HC_SR04 sensor. The node is "micro_ros_arduino_node"
- * and subscribes to "motor_value_topic" for motor inputs.
+ * 
  *              
  * 
  * Version 1.0      Date: Februart 12,2025 Initial Creation         Made by: Aaron Gumba
