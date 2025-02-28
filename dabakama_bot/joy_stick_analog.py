@@ -38,7 +38,7 @@ class JoystickPublisher(Node):
         # Create a publisher for the Joy message
         self.publisher = self.create_publisher(Joy, 'JoyStick_topic', 10)
 
-        # Timer for publishing at 50 Hz
+        # Timer for publishing at 5 Hz
         self.timer = self.create_timer(0.2, self.publish_joystick_data)
 
     def publish_joystick_data(self):
